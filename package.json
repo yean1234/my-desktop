@@ -1,0 +1,27 @@
+{
+  "name": "my-desktop",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yean1234/my-desktop.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/yean1234/my-desktop/issues"
+  },
+  "homepage": "https://github.com/yean1234/my-desktop#readme",
+  "devDependencies": {
+    "vite": "^8.0.0"
+  }
+}
