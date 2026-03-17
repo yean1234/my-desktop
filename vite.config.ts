@@ -3,9 +3,11 @@
  */
 import { resolve } from 'node:path'
 import { defineConfig } from 'vitest/config'
+import { createLocalApiPlugin } from './src/service/localDesktopServer'
 
 export default defineConfig({
   root: resolve(__dirname, 'src/pages'),
+  plugins: [createLocalApiPlugin()],
   build: {
     emptyOutDir: true,
     outDir: resolve(__dirname, 'dist'),
