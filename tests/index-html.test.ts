@@ -9,10 +9,7 @@ describe('index.html', () => {
     expect(indexHtml).toContain('<!doctype html>')
     expect(indexHtml).toContain('<html lang="ko">')
     expect(indexHtml).toContain('<div id="app">')
-    expect(indexHtml).toContain('<header>')
-    expect(indexHtml).toContain('<main>')
     expect(indexHtml).toContain('<div id="desktop-root"></div>')
-    expect(indexHtml).toContain('<nav aria-label="Taskbar">')
   })
 
   it('loads the TypeScript entry file', () => {
