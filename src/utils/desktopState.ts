@@ -17,16 +17,21 @@ export type DesktopState = {
   warningMessage: string
 }
 
-export const createInitialDesktopState = (preferredFolderName: string): DesktopState => ({
+type FolderViewportState = Pick<DesktopState, 'folderItems' | 'folderStatus'>
+
+export const createInitialDesktopState = (): DesktopState => ({
   cpuUsagePercent: null,
   temperatureCelsius: null,
   temperatureStatus: 'idle',
-  folderTitle: preferredFolderName || 'Desktop',
+  folderTitle: 'No folder selected',
   folderPath: '',
-  folderStatus: 'loading',
+  folderStatus: 'idle',
   folderItems: [],
   warningMessage: '',
 })
+
+export const hasVisibleFolderItems = (state: FolderViewportState) =>
+  state.folderStatus === 'ready' && state.folderItems.length > 0
 
 export const dumpDesktopState = (state: DesktopState) => {
   const visibleItems = state.folderItems
