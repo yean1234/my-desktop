@@ -42,6 +42,7 @@ describe('src structure', () => {
     expect(existsSync(resolve(srcPath, 'component/desktop/createDesktopShell.ts'))).toBe(true)
     expect(existsSync(resolve(srcPath, 'styles/desktop-shell.css'))).toBe(true)
     expect(existsSync(resolve(srcPath, 'service/localApi.ts'))).toBe(true)
+    expect(existsSync(resolve(srcPath, 'service/localFolderPicker.ts'))).toBe(true)
     expect(existsSync(resolve(srcPath, 'service/localDesktopServer.ts'))).toBe(true)
     expect(existsSync(resolve(srcPath, 'utils/desktopState.ts'))).toBe(true)
   })

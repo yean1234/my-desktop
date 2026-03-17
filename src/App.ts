@@ -2,8 +2,11 @@
  * This file is for creating the desktop app shell and wiring live data.
  */
 import { createDesktopShell } from './component/desktop/createDesktopShell'
-import { preferredDesktopFolderName } from './config/desktopFolder'
-import { fetchDesktopFolder, fetchSystemMetrics } from './service/localApi'
+import { fetchSystemMetrics } from './service/localApi'
+import {
+  isFolderPickerAbortError,
+  pickLocalFolder,
+} from './service/localFolderPicker'
 import { fetchLocalTemperature } from './service/localWeather'
 import {
   createInitialDesktopState,
@@ -24,7 +27,7 @@ export const createApp = () => {
   }
 
   const shell = createDesktopShell(desktopRootElement)
-  let currentState = createInitialDesktopState(preferredDesktopFolderName)
+  let currentState = createInitialDesktopState()
 
   const render = () => {
     shell.render(currentState)
@@ -54,7 +57,7 @@ export const createApp = () => {
     }
   }
 
-  const loadDesktopFolder = async () => {
+  const openFolderPicker = async () => {
     updateState((state) => ({
       ...state,
       folderStatus: 'loading',
@@ -62,24 +65,32 @@ export const createApp = () => {
     }))
 
     try {
-      const folder = await fetchDesktopFolder(preferredDesktopFolderName)
+      const folder = await pickLocalFolder()
 
       updateState((state) => ({
         ...state,
         folderTitle: folder.folderName,
-        folderPath: folder.folderPath,
+        folderPath: folder.locationLabel,
         folderStatus: 'ready',
         folderItems: folder.items,
         warningMessage: folder.warningMessage,
       }))
     } catch (error) {
+      if (isFolderPickerAbortError(error)) {
+        updateState((state) => ({
+          ...state,
+          folderStatus: state.folderItems.length > 0 ? 'ready' : 'idle',
+        }))
+
+        return
+      }
+
       const errorMessage =
-        error instanceof Error ? error.message : 'Could not read the Desktop folder'
+        error instanceof Error ? error.message : 'Could not read the selected folder'
 
       updateState((state) => ({
         ...state,
         folderStatus: 'error',
-        folderItems: [],
         warningMessage: errorMessage,
       }))
     }
@@ -108,27 +119,17 @@ export const createApp = () => {
     }
   }
 
-  shell.onRefreshClick(() => {
-    void loadCpuUsage()
-    void loadDesktopFolder()
-  })
-
-  shell.onRetryWeatherClick(() => {
-    void loadLocalTemperature()
+  shell.onOpenFolderClick(() => {
+    void openFolderPicker()
   })
 
   render()
   void loadCpuUsage()
-  void loadDesktopFolder()
   void loadLocalTemperature()
 
   window.setInterval(() => {
     void loadCpuUsage()
   }, 1500)
-
-  window.setInterval(() => {
-    void loadDesktopFolder()
-  }, 30000)
 
   window.setInterval(() => {
     void loadLocalTemperature()

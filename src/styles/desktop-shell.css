@@ -1,9 +1,11 @@
 /*
  * This file is for styling the retro desktop shell layout.
  */
+@import url("https://cdn.jsdelivr.net/gh/MonadABXY/mona-font/web/mona.css");
+
 :root {
   color: #1a2031;
-  font-family: "Trebuchet MS", Verdana, sans-serif;
+  font-family: "Mona12 Text KR", "Mona12", "Trebuchet MS", Verdana, sans-serif;
   line-height: 1.4;
   background: #6976c2;
 }
@@ -279,8 +281,19 @@ textarea {
   cursor: pointer;
 }
 
+.retro-button--primary {
+  min-height: 54px;
+  font-weight: 700;
+}
+
 .retro-button:hover {
   background: #fcf5ea;
+}
+
+.retro-button:disabled {
+  cursor: wait;
+  color: #5f6270;
+  background: #dbd5c9;
 }
 
 .folder-window__menu-note {
@@ -305,53 +318,88 @@ textarea {
   font-size: 12px;
 }
 
-.folder-window__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(94px, 1fr));
-  gap: 12px;
+.folder-window__viewport {
+  min-height: 188px;
+}
+
+.folder-window__viewport--icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 16px;
+  align-items: flex-start;
   align-content: start;
 }
 
-.folder-item {
-  min-height: 96px;
-  padding: 9px 8px 8px;
-  display: grid;
-  justify-items: center;
-  align-content: start;
-  gap: 8px;
-  text-align: center;
-  border: 2px solid #5b5960;
-  background: #f3ede0;
-  box-shadow:
-    inset 1px 1px 0 #ffffff,
-    inset -1px -1px 0 #b2aa9a;
+.folder-window__viewport--placeholder {
+  display: block;
 }
 
-.folder-item__icon {
-  width: 48px;
-  height: 36px;
+.folder-window__placeholder {
+  height: 100%;
+  box-sizing: border-box;
+  padding: 16px;
   display: grid;
   place-items: center;
-  border: 2px solid #57637d;
-  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.8);
-  font-size: 10px;
-  font-weight: 700;
+  text-align: center;
+  font-size: 13px;
+  border: 2px dashed #7b7380;
+  background: rgba(255, 255, 255, 0.35);
+  color: #3f3a32;
 }
 
-.folder-item--directory .folder-item__icon {
-  background: linear-gradient(180deg, #efe597 0%, #c8da76 100%);
+.folder-entry {
+  width: 84px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
 }
 
-.folder-item--file .folder-item__icon {
-  background: linear-gradient(180deg, #f0eef2 0%, #c9cee0 100%);
+.folder-entry__image {
+  width: 52px;
+  height: 40px;
+  object-fit: contain;
+  image-rendering: pixelated;
 }
 
-.folder-item__name {
+.folder-entry__image--file {
+  width: 40px;
+  height: 40px;
+}
+
+.folder-entry__file-icon {
+  position: relative;
+  width: 34px;
+  height: 40px;
+  display: block;
+  border: 2px solid #2e344d;
+  background: linear-gradient(180deg, #fbfaf6 0%, #e7e2d8 100%);
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    2px 2px 0 #171a2a;
+}
+
+.folder-entry__file-icon::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(135deg, #d9d4ca 50%, #ffffff 50%);
+  border-top: 2px solid #2e344d;
+  border-right: 2px solid #2e344d;
+}
+
+.folder-entry__name {
   width: 100%;
   display: -webkit-box;
   overflow: hidden;
   font-size: 12px;
   line-height: 1.2;
+  color: #23283a;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   word-break: break-word;
