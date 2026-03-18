@@ -17,6 +17,11 @@ export const formatTemperature = (
   return hasError ? 'N/A' : '--'
 }
 
+const padTimeNumber = (value: number) => String(value).padStart(2, '0')
+
+export const formatLocalTime = (date: Date) =>
+  `${padTimeNumber(date.getHours())}:${padTimeNumber(date.getMinutes())}:${padTimeNumber(date.getSeconds())}`
+
 export const formatFolderItemCount = (itemCount: number) =>
   `${itemCount} item${itemCount === 1 ? '' : 's'}`
 
