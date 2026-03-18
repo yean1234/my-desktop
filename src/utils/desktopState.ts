@@ -8,6 +8,7 @@ export type LoadStatus = 'idle' | 'loading' | 'ready' | 'error'
 export type InternetDialogMode = 'closed' | 'input' | 'confirm'
 export type InternetTodoItemStatus = 'active' | 'removing'
 export type TodoSortMode = 'latest' | 'oldest' | 'alphabetical'
+export type TodoResetDialogMode = 'closed' | 'confirm' | 'progress'
 
 export type InternetTodoItem = {
   id: number
@@ -29,7 +30,10 @@ export type DesktopState = {
   todoComposerOpen: boolean
   todoDraftText: string
   todoItems: InternetTodoItem[]
-  todoResetDialogOpen: boolean
+  todoResetDialogMode: TodoResetDialogMode
+  todoResetProgress: number
+  todoResetSnapshotItems: InternetTodoItem[]
+  todoResetSnapshotNextTodoId: number
   todoSortMode: TodoSortMode
   visitorName: string
   folderTitle: string
@@ -55,7 +59,10 @@ export const createInitialDesktopState = (now = new Date()): DesktopState => ({
   todoComposerOpen: false,
   todoDraftText: '',
   todoItems: [],
-  todoResetDialogOpen: false,
+  todoResetDialogMode: 'closed',
+  todoResetProgress: 0,
+  todoResetSnapshotItems: [],
+  todoResetSnapshotNextTodoId: 1,
   todoSortMode: 'latest',
   visitorName: '',
   folderTitle: 'No folder selected',
@@ -85,7 +92,10 @@ export const closeInternetWindow = (state: DesktopState): DesktopState => ({
   internetDraftName: state.visitorName,
   todoComposerOpen: false,
   todoDraftText: '',
-  todoResetDialogOpen: false,
+  todoResetDialogMode: 'closed',
+  todoResetProgress: 0,
+  todoResetSnapshotItems: [],
+  todoResetSnapshotNextTodoId: state.nextTodoId,
 })
 
 export const startInternetLaunch = (state: DesktopState): DesktopState => ({
@@ -231,12 +241,15 @@ export const finishTodoComposer = (state: DesktopState): DesktopState => {
 
 export const openTodoResetDialog = (state: DesktopState): DesktopState => ({
   ...state,
-  todoResetDialogOpen: true,
+  todoResetDialogMode: 'confirm',
 })
 
 export const closeTodoResetDialog = (state: DesktopState): DesktopState => ({
   ...state,
-  todoResetDialogOpen: false,
+  todoResetDialogMode: 'closed',
+  todoResetProgress: 0,
+  todoResetSnapshotItems: [],
+  todoResetSnapshotNextTodoId: state.nextTodoId,
 })
 
 export const resetTodoItems = (state: DesktopState): DesktopState => ({
@@ -245,7 +258,89 @@ export const resetTodoItems = (state: DesktopState): DesktopState => ({
   todoComposerOpen: false,
   todoDraftText: '',
   todoItems: [],
-  todoResetDialogOpen: false,
+  todoResetDialogMode: 'closed',
+  todoResetProgress: 0,
+  todoResetSnapshotItems: [],
+  todoResetSnapshotNextTodoId: 1,
+})
+
+export const startTodoResetProgress = (state: DesktopState): DesktopState => {
+  if (state.todoItems.length === 0) {
+    return state
+  }
+
+  return {
+    ...state,
+    todoResetDialogMode: 'progress',
+    todoResetProgress: 0,
+    todoResetSnapshotItems: state.todoItems.map((item) => ({ ...item })),
+    todoResetSnapshotNextTodoId: state.nextTodoId,
+  }
+}
+
+export const advanceTodoResetProgress = (state: DesktopState): DesktopState => {
+  if (state.todoResetDialogMode !== 'progress') {
+    return state
+  }
+
+  const nextItemToRemove = getSortedTodoItems(state)[0]
+
+  if (!nextItemToRemove) {
+    return {
+      ...state,
+      todoResetDialogMode: 'closed',
+      todoResetProgress: 100,
+      todoResetSnapshotItems: [],
+      todoResetSnapshotNextTodoId: state.nextTodoId,
+    }
+  }
+
+  const nextTodoItems = state.todoItems.filter((item) => item.id !== nextItemToRemove.id)
+  const totalItemCount = state.todoResetSnapshotItems.length
+  const deletedItemCount = totalItemCount - nextTodoItems.length
+  const nextProgress =
+    totalItemCount === 0 ? 100 : Math.round((deletedItemCount / totalItemCount) * 100)
+
+  if (nextTodoItems.length === 0) {
+    return {
+      ...state,
+      todoItems: [],
+      todoResetDialogMode: 'closed',
+      todoResetProgress: 100,
+      todoResetSnapshotItems: [],
+      todoResetSnapshotNextTodoId: state.nextTodoId,
+    }
+  }
+
+  return {
+    ...state,
+    todoItems: nextTodoItems,
+    todoResetProgress: nextProgress,
+  }
+}
+
+export const cancelTodoResetProgress = (state: DesktopState): DesktopState => {
+  if (state.todoResetDialogMode !== 'progress') {
+    return closeTodoResetDialog(state)
+  }
+
+  return {
+    ...state,
+    nextTodoId: state.todoResetSnapshotNextTodoId,
+    todoItems: state.todoResetSnapshotItems.map((item) => ({ ...item })),
+    todoResetDialogMode: 'closed',
+    todoResetProgress: 0,
+    todoResetSnapshotItems: [],
+    todoResetSnapshotNextTodoId: state.todoResetSnapshotNextTodoId,
+  }
+}
+
+export const stopTodoResetProgress = (state: DesktopState): DesktopState => ({
+  ...state,
+  todoResetDialogMode: 'closed',
+  todoResetProgress: 0,
+  todoResetSnapshotItems: [],
+  todoResetSnapshotNextTodoId: state.nextTodoId,
 })
 
 export const startTodoItemRemoval = (state: DesktopState, todoId: number): DesktopState => ({
@@ -307,7 +402,8 @@ export const dumpDesktopState = (state: DesktopState) => {
     `todoDraft=${state.todoDraftText || '-'}`,
     `todoCount=${state.todoItems.length}`,
     `todoItems=${todoItems || '-'}`,
-    `todoResetDialog=${state.todoResetDialogOpen ? 'open' : 'closed'}`,
+    `todoResetDialog=${state.todoResetDialogMode}`,
+    `todoResetProgress=${state.todoResetProgress}%`,
     `todoSort=${state.todoSortMode}`,
     `visitorName=${state.visitorName || '-'}`,
     `folder=${state.folderTitle}`,

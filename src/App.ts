@@ -10,8 +10,10 @@ import {
 import { fetchLocalTemperature } from './service/localWeather'
 import {
   addTodoItem,
+  advanceTodoResetProgress,
   cancelInternetNameDialog,
   cancelTodoComposer,
+  cancelTodoResetProgress,
   closeTodoResetDialog,
   closeInternetWindow,
   confirmInternetName,
@@ -23,14 +25,15 @@ import {
   openTodoResetDialog,
   openInternetNameDialog,
   openTodoComposer,
-  resetTodoItems,
   startInternetLaunch,
+  startTodoResetProgress,
   startTodoItemRemoval,
   rejectInternetNameConfirmation,
   requestInternetNameConfirmation,
   syncLocalTime,
   type DesktopState,
   type TodoSortMode,
+  stopTodoResetProgress,
   updateInternetLaunchProgress,
   updateTodoDraftText,
   updateTodoSortMode,
@@ -52,6 +55,7 @@ export const createApp = () => {
   const shell = createDesktopShell(desktopRootElement)
   let currentState = createInitialDesktopState()
   let internetLaunchTimeoutIds: number[] = []
+  let todoResetIntervalId = 0
 
   const render = () => {
     shell.render(currentState)
@@ -71,6 +75,15 @@ export const createApp = () => {
     }
 
     internetLaunchTimeoutIds = []
+  }
+
+  const clearTodoResetInterval = () => {
+    if (todoResetIntervalId === 0) {
+      return
+    }
+
+    window.clearInterval(todoResetIntervalId)
+    todoResetIntervalId = 0
   }
 
   const loadCpuUsage = async () => {
@@ -178,6 +191,7 @@ export const createApp = () => {
 
   const hideInternetWindow = () => {
     clearInternetLaunchTimeouts()
+    clearTodoResetInterval()
     updateState((state) => closeInternetWindow(state))
   }
 
@@ -229,8 +243,27 @@ export const createApp = () => {
     updateState((state) => closeTodoResetDialog(state))
   }
 
-  const clearTodoItems = () => {
-    updateState((state) => resetTodoItems(state))
+  const startTodoReset = () => {
+    clearTodoResetInterval()
+    updateState((state) => startTodoResetProgress(state))
+
+    todoResetIntervalId = window.setInterval(() => {
+      updateState((state) => advanceTodoResetProgress(state))
+
+      if (currentState.todoResetDialogMode !== 'progress') {
+        clearTodoResetInterval()
+      }
+    }, 1000)
+  }
+
+  const cancelWholeTodoReset = () => {
+    clearTodoResetInterval()
+    updateState((state) => cancelTodoResetProgress(state))
+  }
+
+  const stopTodoReset = () => {
+    clearTodoResetInterval()
+    updateState((state) => stopTodoResetProgress(state))
   }
 
   const completeTodoItem = (todoId: number) => {
@@ -321,12 +354,16 @@ export const createApp = () => {
     hideTodoResetDialog()
   })
 
-  shell.onStopTodoResetClick(() => {
-    hideTodoResetDialog()
+  shell.onAcceptTodoResetClick(() => {
+    startTodoReset()
   })
 
-  shell.onAcceptTodoResetClick(() => {
-    clearTodoItems()
+  shell.onCancelWholeTodoResetClick(() => {
+    cancelWholeTodoReset()
+  })
+
+  shell.onStopTodoResetClick(() => {
+    stopTodoReset()
   })
 
   shell.onRejectInternetNameConfirmationClick(() => {

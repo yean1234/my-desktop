@@ -743,8 +743,11 @@ textarea {
 [data-name-entry-dialog][hidden],
 [data-name-confirm-dialog][hidden],
 [data-todo-composer][hidden],
+[data-todo-reset-toolbar][hidden],
 [data-todo-toolbar][hidden],
 [data-internet-launch-dialog][hidden],
+[data-todo-reset-confirm-panel][hidden],
+[data-todo-reset-progress-panel][hidden],
 [data-todo-reset-dialog][hidden] {
   display: none !important;
 }
@@ -773,6 +776,10 @@ textarea {
   min-width: 110px;
   min-height: 40px;
   text-align: center;
+}
+
+.internet-name-entry__button:disabled {
+  cursor: not-allowed;
 }
 
 .internet-todo-composer {
@@ -861,6 +868,7 @@ textarea {
   display: grid;
   justify-items: stretch;
   gap: 12px;
+  pointer-events: none;
 }
 
 .internet-todo-stack {
@@ -869,10 +877,17 @@ textarea {
   align-items: stretch;
   gap: 10px;
   width: 100%;
+  max-height: min(180px, 22vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6px;
+  box-sizing: border-box;
+  pointer-events: auto;
 }
 
 .internet-todo-sort-panel {
   width: 100%;
+  pointer-events: auto;
 }
 
 .internet-todo-banner {
@@ -966,10 +981,6 @@ textarea {
   gap: 10px;
 }
 
-.internet-confirm-dialog__actions--triple {
-  flex-wrap: wrap;
-}
-
 .internet-confirm-dialog__button {
   min-width: 110px;
   min-height: 40px;
@@ -985,8 +996,46 @@ textarea {
     inset -1px -1px 0 rgba(77, 25, 42, 0.55);
 }
 
+.internet-confirm-dialog__button--stop:hover {
+  background: linear-gradient(180deg, #b66484 0%, #7e3956 100%);
+}
+
 .internet-confirm-dialog__panel--todo-reset {
   width: min(100%, 420px);
+}
+
+.internet-confirm-dialog__panel--todo-reset-progress {
+  width: min(100%, 420px);
+}
+
+.internet-reset-progress {
+  height: 24px;
+  padding: 3px;
+  box-sizing: border-box;
+  border: 2px solid #53608c;
+  background: rgba(255, 253, 246, 0.94);
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 rgba(136, 145, 180, 0.72);
+}
+
+.internet-reset-progress__fill {
+  width: 0;
+  height: 100%;
+  background:
+    linear-gradient(90deg, #ff89bf 0%, #ffd274 42%, #7cbeff 100%);
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.75),
+    1px 0 0 rgba(62, 77, 144, 0.32);
+  transition: width 220ms steps(6, end);
+}
+
+.internet-reset-progress__value {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+  color: #304071;
 }
 
 [data-temperature-label][data-state='error'] strong {

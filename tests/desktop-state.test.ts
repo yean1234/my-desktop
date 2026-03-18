@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   addTodoItem,
+  advanceTodoResetProgress,
   cancelInternetNameDialog,
   cancelTodoComposer,
+  cancelTodoResetProgress,
   closeTodoResetDialog,
   closeInternetWindow,
   confirmInternetName,
@@ -18,10 +20,11 @@ import {
   openTodoComposer,
   openTodoResetDialog,
   rejectInternetNameConfirmation,
-  resetTodoItems,
   requestInternetNameConfirmation,
   startInternetLaunch,
+  startTodoResetProgress,
   startTodoItemRemoval,
+  stopTodoResetProgress,
   syncLocalTime,
   updateInternetLaunchProgress,
   updateTodoDraftText,
@@ -49,7 +52,13 @@ describe('desktop state dump', () => {
         { id: 1, text: '메일 보내기', status: 'active' },
         { id: 2, text: '장보기', status: 'removing' },
       ],
-      todoResetDialogOpen: true,
+      todoResetDialogMode: 'progress',
+      todoResetProgress: 50,
+      todoResetSnapshotItems: [
+        { id: 1, text: '메일 보내기', status: 'active' },
+        { id: 2, text: '장보기', status: 'active' },
+      ],
+      todoResetSnapshotNextTodoId: 3,
       todoSortMode: 'alphabetical',
       visitorName: 'Yyeon',
       folderTitle: 'Project',
@@ -74,7 +83,8 @@ describe('desktop state dump', () => {
     expect(dump).toContain('todoDraft=회의 준비하기')
     expect(dump).toContain('todoCount=2')
     expect(dump).toContain('todoItems=active:메일 보내기, removing:장보기')
-    expect(dump).toContain('todoResetDialog=open')
+    expect(dump).toContain('todoResetDialog=progress')
+    expect(dump).toContain('todoResetProgress=50%')
     expect(dump).toContain('todoSort=alphabetical')
     expect(dump).toContain('visitorName=Yyeon')
     expect(dump).toContain('folder=Project')
@@ -99,6 +109,7 @@ describe('desktop state dump', () => {
     expect(dump).toContain('todoCount=0')
     expect(dump).toContain('todoItems=-')
     expect(dump).toContain('todoResetDialog=closed')
+    expect(dump).toContain('todoResetProgress=0%')
     expect(dump).toContain('todoSort=latest')
     expect(dump).toContain('visitorName=-')
     expect(dump).toContain('visibleItems=-')
@@ -347,29 +358,92 @@ describe('desktop state dump', () => {
     })
     const closedState = closeTodoResetDialog(openState)
 
-    expect(openState.todoResetDialogOpen).toBe(true)
-    expect(closedState.todoResetDialogOpen).toBe(false)
+    expect(openState.todoResetDialogMode).toBe('confirm')
+    expect(closedState.todoResetDialogMode).toBe('closed')
     expect(closedState.todoItems).toEqual([{ id: 1, text: '장보기', status: 'active' }])
   })
 
-  it('resets the todo list after the reset dialog is accepted', () => {
-    const nextState = resetTodoItems({
+  it('starts the todo reset progress with a snapshot of the current list', () => {
+    const nextState = startTodoResetProgress({
       ...createInitialDesktopState(new Date(2026, 2, 19, 9, 8, 7)),
       nextTodoId: 4,
-      todoComposerOpen: true,
-      todoDraftText: '초안',
       todoItems: [
         { id: 1, text: '장보기', status: 'active' },
         { id: 2, text: '메일 보내기', status: 'active' },
       ],
-      todoResetDialogOpen: true,
+      todoResetDialogMode: 'confirm',
     })
 
-    expect(nextState.nextTodoId).toBe(1)
-    expect(nextState.todoComposerOpen).toBe(false)
-    expect(nextState.todoDraftText).toBe('')
-    expect(nextState.todoItems).toEqual([])
-    expect(nextState.todoResetDialogOpen).toBe(false)
+    expect(nextState.todoResetDialogMode).toBe('progress')
+    expect(nextState.todoResetProgress).toBe(0)
+    expect(nextState.todoResetSnapshotItems).toEqual([
+      { id: 1, text: '장보기', status: 'active' },
+      { id: 2, text: '메일 보내기', status: 'active' },
+    ])
+    expect(nextState.todoResetSnapshotNextTodoId).toBe(4)
+  })
+
+  it('removes one todo item per progress tick', () => {
+    const nextState = advanceTodoResetProgress({
+      ...createInitialDesktopState(new Date(2026, 2, 19, 9, 8, 7)),
+      nextTodoId: 3,
+      todoItems: [
+        { id: 1, text: '장보기', status: 'active' },
+        { id: 2, text: '메일 보내기', status: 'active' },
+      ],
+      todoResetDialogMode: 'progress',
+      todoResetSnapshotItems: [
+        { id: 1, text: '장보기', status: 'active' },
+        { id: 2, text: '메일 보내기', status: 'active' },
+      ],
+      todoResetSnapshotNextTodoId: 3,
+    })
+
+    expect(nextState.todoItems).toEqual([{ id: 1, text: '장보기', status: 'active' }])
+    expect(nextState.todoResetDialogMode).toBe('progress')
+    expect(nextState.todoResetProgress).toBe(50)
+  })
+
+  it('restores the full todo list when the whole reset is cancelled', () => {
+    const nextState = cancelTodoResetProgress({
+      ...createInitialDesktopState(new Date(2026, 2, 19, 9, 8, 7)),
+      nextTodoId: 5,
+      todoItems: [{ id: 2, text: '메일 보내기', status: 'active' }],
+      todoResetDialogMode: 'progress',
+      todoResetProgress: 50,
+      todoResetSnapshotItems: [
+        { id: 1, text: '장보기', status: 'active' },
+        { id: 2, text: '메일 보내기', status: 'active' },
+      ],
+      todoResetSnapshotNextTodoId: 3,
+    })
+
+    expect(nextState.nextTodoId).toBe(3)
+    expect(nextState.todoItems).toEqual([
+      { id: 1, text: '장보기', status: 'active' },
+      { id: 2, text: '메일 보내기', status: 'active' },
+    ])
+    expect(nextState.todoResetDialogMode).toBe('closed')
+    expect(nextState.todoResetProgress).toBe(0)
+  })
+
+  it('stops the reset and keeps already deleted items deleted', () => {
+    const nextState = stopTodoResetProgress({
+      ...createInitialDesktopState(new Date(2026, 2, 19, 9, 8, 7)),
+      nextTodoId: 3,
+      todoItems: [{ id: 2, text: '메일 보내기', status: 'active' }],
+      todoResetDialogMode: 'progress',
+      todoResetProgress: 50,
+      todoResetSnapshotItems: [
+        { id: 1, text: '장보기', status: 'active' },
+        { id: 2, text: '메일 보내기', status: 'active' },
+      ],
+      todoResetSnapshotNextTodoId: 3,
+    })
+
+    expect(nextState.todoItems).toEqual([{ id: 2, text: '메일 보내기', status: 'active' }])
+    expect(nextState.todoResetDialogMode).toBe('closed')
+    expect(nextState.todoResetProgress).toBe(0)
   })
 
   it('marks a todo item as removing before the dismiss animation completes', () => {

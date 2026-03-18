@@ -46,6 +46,7 @@ type DesktopShell = {
   onTodoSortChange: (handler: ShellTodoSortHandler) => void
   onOpenTodoResetDialogClick: (handler: ShellActionHandler) => void
   onRejectTodoResetClick: (handler: ShellActionHandler) => void
+  onCancelWholeTodoResetClick: (handler: ShellActionHandler) => void
   onStopTodoResetClick: (handler: ShellActionHandler) => void
   onAcceptTodoResetClick: (handler: ShellActionHandler) => void
 }
@@ -76,6 +77,7 @@ export const createDesktopShell = (container: HTMLElement): DesktopShell => {
   let todoSortChangeHandler: ShellTodoSortHandler = () => {}
   let openTodoResetDialogHandler: ShellActionHandler = () => {}
   let rejectTodoResetHandler: ShellActionHandler = () => {}
+  let cancelWholeTodoResetHandler: ShellActionHandler = () => {}
   let stopTodoResetHandler: ShellActionHandler = () => {}
   let acceptTodoResetHandler: ShellActionHandler = () => {}
   let isInternetWindowClosing = false
@@ -240,7 +242,7 @@ export const createDesktopShell = (container: HTMLElement): DesktopShell => {
                 </section>
               </div>
             </div>
-            <section class="internet-todo-toolbar">
+            <section class="internet-todo-toolbar" data-todo-reset-toolbar hidden>
               <button class="retro-button internet-todo-reset-button" type="button" data-open-todo-reset-dialog-button>
                 초기화
               </button>
@@ -259,17 +261,36 @@ export const createDesktopShell = (container: HTMLElement): DesktopShell => {
               </div>
             </section>
             <section class="internet-confirm-dialog internet-confirm-dialog--todo-reset" data-todo-reset-dialog hidden>
-              <div class="internet-confirm-dialog__panel internet-confirm-dialog__panel--todo-reset">
+              <div class="internet-confirm-dialog__panel internet-confirm-dialog__panel--todo-reset" data-todo-reset-confirm-panel>
                 <p class="internet-confirm-dialog__message">정말 초기화하시겠습니까?</p>
-                <div class="internet-confirm-dialog__actions internet-confirm-dialog__actions--triple">
+                <div class="internet-confirm-dialog__actions">
                   <button class="retro-button retro-button--primary internet-confirm-dialog__button" type="button" data-accept-todo-reset-button>
                     예
                   </button>
                   <button class="retro-button internet-confirm-dialog__button" type="button" data-reject-todo-reset-button>
                     아니오
                   </button>
+                </div>
+              </div>
+              <div class="internet-confirm-dialog__panel internet-confirm-dialog__panel--todo-reset-progress" data-todo-reset-progress-panel hidden>
+                <p class="internet-confirm-dialog__message">초기화가 진행 중입니다</p>
+                <div
+                  class="internet-reset-progress"
+                  data-todo-reset-progress-track
+                  role="progressbar"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-valuenow="0"
+                >
+                  <div class="internet-reset-progress__fill" data-todo-reset-progress-fill></div>
+                </div>
+                <p class="internet-reset-progress__value" data-todo-reset-progress-value>0%</p>
+                <div class="internet-confirm-dialog__actions">
+                  <button class="retro-button internet-confirm-dialog__button" type="button" data-cancel-whole-todo-reset-button>
+                    전체 취소
+                  </button>
                   <button class="retro-button internet-confirm-dialog__button internet-confirm-dialog__button--stop" type="button" data-stop-todo-reset-button>
-                    중지
+                    중단
                   </button>
                 </div>
               </div>
@@ -353,11 +374,18 @@ export const createDesktopShell = (container: HTMLElement): DesktopShell => {
   const completeTodoComposerButtonElement = container.querySelector<HTMLButtonElement>('[data-complete-todo-composer-button]')
   const cancelTodoComposerButtonElement = container.querySelector<HTMLButtonElement>('[data-cancel-todo-composer-button]')
   const todoSortInputElements = container.querySelectorAll<HTMLInputElement>('[data-todo-sort-input]')
+  const todoResetToolbarElement = container.querySelector<HTMLElement>('[data-todo-reset-toolbar]')
   const todoToolbarElement = container.querySelector<HTMLElement>('[data-todo-toolbar]')
   const openTodoResetDialogButtonElement = container.querySelector<HTMLButtonElement>('[data-open-todo-reset-dialog-button]')
   const todoResetDialogElement = container.querySelector<HTMLElement>('[data-todo-reset-dialog]')
+  const todoResetConfirmPanelElement = container.querySelector<HTMLElement>('[data-todo-reset-confirm-panel]')
+  const todoResetProgressPanelElement = container.querySelector<HTMLElement>('[data-todo-reset-progress-panel]')
+  const todoResetProgressTrackElement = container.querySelector<HTMLElement>('[data-todo-reset-progress-track]')
+  const todoResetProgressFillElement = container.querySelector<HTMLElement>('[data-todo-reset-progress-fill]')
+  const todoResetProgressValueElement = container.querySelector<HTMLElement>('[data-todo-reset-progress-value]')
   const acceptTodoResetButtonElement = container.querySelector<HTMLButtonElement>('[data-accept-todo-reset-button]')
   const rejectTodoResetButtonElement = container.querySelector<HTMLButtonElement>('[data-reject-todo-reset-button]')
+  const cancelWholeTodoResetButtonElement = container.querySelector<HTMLButtonElement>('[data-cancel-whole-todo-reset-button]')
   const stopTodoResetButtonElement = container.querySelector<HTMLButtonElement>('[data-stop-todo-reset-button]')
   const todoListElement = container.querySelector<HTMLElement>('[data-todo-list]')
 
@@ -398,11 +426,18 @@ export const createDesktopShell = (container: HTMLElement): DesktopShell => {
     !completeTodoComposerButtonElement ||
     !cancelTodoComposerButtonElement ||
     todoSortInputElements.length !== 3 ||
+    !todoResetToolbarElement ||
     !todoToolbarElement ||
     !openTodoResetDialogButtonElement ||
     !todoResetDialogElement ||
+    !todoResetConfirmPanelElement ||
+    !todoResetProgressPanelElement ||
+    !todoResetProgressTrackElement ||
+    !todoResetProgressFillElement ||
+    !todoResetProgressValueElement ||
     !acceptTodoResetButtonElement ||
     !rejectTodoResetButtonElement ||
+    !cancelWholeTodoResetButtonElement ||
     !stopTodoResetButtonElement ||
     !todoListElement
   ) {
@@ -478,6 +513,10 @@ export const createDesktopShell = (container: HTMLElement): DesktopShell => {
 
   rejectTodoResetButtonElement.addEventListener('click', () => {
     rejectTodoResetHandler()
+  })
+
+  cancelWholeTodoResetButtonElement.addEventListener('click', () => {
+    cancelWholeTodoResetHandler()
   })
 
   stopTodoResetButtonElement.addEventListener('click', () => {
@@ -643,7 +682,16 @@ export const createDesktopShell = (container: HTMLElement): DesktopShell => {
       }
       confirmNameInputButtonElement.disabled = state.internetDraftName.trim().length === 0
       localTimeLabelElement.textContent = state.localTimeLabel
-      todoResetDialogElement.hidden = !state.todoResetDialogOpen
+      todoResetDialogElement.hidden = state.todoResetDialogMode === 'closed'
+      todoResetConfirmPanelElement.hidden = state.todoResetDialogMode !== 'confirm'
+      todoResetProgressPanelElement.hidden = state.todoResetDialogMode !== 'progress'
+      todoResetProgressTrackElement.setAttribute('aria-valuenow', String(state.todoResetProgress))
+      todoResetProgressFillElement.style.width = `${state.todoResetProgress}%`
+      todoResetProgressValueElement.textContent = `${state.todoResetProgress}%`
+      todoResetToolbarElement.hidden =
+        !state.todoComposerOpen &&
+        state.todoItems.length === 0 &&
+        state.todoResetDialogMode === 'closed'
       todoToolbarElement.hidden = state.todoItems.length === 0
       for (const todoSortInputElement of todoSortInputElements) {
         todoSortInputElement.checked = todoSortInputElement.value === state.todoSortMode
@@ -757,6 +805,9 @@ export const createDesktopShell = (container: HTMLElement): DesktopShell => {
     },
     onRejectTodoResetClick(handler) {
       rejectTodoResetHandler = handler
+    },
+    onCancelWholeTodoResetClick(handler) {
+      cancelWholeTodoResetHandler = handler
     },
     onStopTodoResetClick(handler) {
       stopTodoResetHandler = handler

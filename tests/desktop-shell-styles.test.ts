@@ -60,11 +60,14 @@ describe('desktop shell styles', () => {
     expect(shellStyles).toMatch(
       /\.internet-name-entry__input\s*\{[\s\S]*min-height:\s*44px;[\s\S]*border:\s*2px solid #707ca6;[\s\S]*background:\s*#fffefc;/,
     )
+    expect(shellStyles).toMatch(
+      /\.internet-name-entry__button:disabled\s*\{[\s\S]*cursor:\s*not-allowed;/,
+    )
   })
 
   it('shows a retro confirmation modal for the name change', () => {
     expect(shellStyles).toMatch(
-      /\[data-name-entry-dialog\]\[hidden\],[\s\S]*\[data-name-confirm-dialog\]\[hidden\],[\s\S]*\[data-todo-composer\]\[hidden\],[\s\S]*\[data-todo-toolbar\]\[hidden\],[\s\S]*\[data-internet-launch-dialog\]\[hidden\],[\s\S]*\[data-todo-reset-dialog\]\[hidden\]\s*\{[\s\S]*display:\s*none !important;/,
+      /\[data-name-entry-dialog\]\[hidden\],[\s\S]*\[data-name-confirm-dialog\]\[hidden\],[\s\S]*\[data-todo-composer\]\[hidden\],[\s\S]*\[data-todo-reset-toolbar\]\[hidden\],[\s\S]*\[data-todo-toolbar\]\[hidden\],[\s\S]*\[data-internet-launch-dialog\]\[hidden\],[\s\S]*\[data-todo-reset-confirm-panel\]\[hidden\],[\s\S]*\[data-todo-reset-progress-panel\]\[hidden\],[\s\S]*\[data-todo-reset-dialog\]\[hidden\]\s*\{[\s\S]*display:\s*none !important;/,
     )
     expect(shellStyles).toMatch(
       /\.internet-confirm-dialog\s*\{[\s\S]*position:\s*fixed;[\s\S]*place-items:\s*center;[\s\S]*background:\s*rgba\(68, 72, 123, 0.38\);/,
@@ -106,19 +109,25 @@ describe('desktop shell styles', () => {
       /\.internet-todo-dock\s*\{[\s\S]*position:\s*fixed;[\s\S]*right:\s*24px;[\s\S]*bottom:\s*24px;[\s\S]*display:\s*grid;/,
     )
     expect(shellStyles).toMatch(
-      /\.internet-todo-stack\s*\{[\s\S]*display:\s*flex;[\s\S]*flex-direction:\s*column-reverse;[\s\S]*align-items:\s*stretch;/,
+      /\.internet-todo-stack\s*\{[\s\S]*display:\s*flex;[\s\S]*flex-direction:\s*column-reverse;[\s\S]*align-items:\s*stretch;[\s\S]*max-height:\s*min\(180px, 22vh\);[\s\S]*overflow-y:\s*auto;/,
     )
   })
 
-  it('shows a retro three-button reset dialog for the todo list', () => {
+  it('shows a retro progress reset dialog for the todo list', () => {
     expect(shellStyles).toMatch(
-      /\.internet-confirm-dialog__actions--triple\s*\{[\s\S]*flex-wrap:\s*wrap;/,
+      /\.internet-confirm-dialog__panel--todo-reset-progress\s*\{[\s\S]*width:\s*min\(100%, 420px\);/,
+    )
+    expect(shellStyles).toMatch(
+      /\.internet-reset-progress\s*\{[\s\S]*height:\s*24px;[\s\S]*border:\s*2px solid #53608c;/,
+    )
+    expect(shellStyles).toMatch(
+      /\.internet-reset-progress__fill\s*\{[\s\S]*background:[\s\S]*#ff89bf[\s\S]*#7cbeff[\s\S]*transition:\s*width 220ms steps\(6, end\);/,
     )
     expect(shellStyles).toMatch(
       /\.internet-confirm-dialog__button--stop\s*\{[\s\S]*background:\s*linear-gradient\(180deg, #b66484 0%, #7e3956 100%\);/,
     )
     expect(shellStyles).toMatch(
-      /\.internet-confirm-dialog__panel--todo-reset\s*\{[\s\S]*width:\s*min\(100%, 420px\);/,
+      /\.internet-confirm-dialog__button--stop:hover\s*\{[\s\S]*background:\s*linear-gradient\(180deg, #b66484 0%, #7e3956 100%\);/,
     )
   })
 
