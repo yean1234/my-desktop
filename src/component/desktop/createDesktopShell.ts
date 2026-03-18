@@ -1,27 +1,86 @@
 /*
  * This file is for rendering the retro desktop shell and the folder window.
  */
+import { faInternetExplorer } from '@fortawesome/free-brands-svg-icons'
+import { icon } from '@fortawesome/fontawesome-svg-core'
 import folderIconOneUrl from '../../assets/icons/File1.png'
 import folderIconTwoUrl from '../../assets/icons/File2.png'
 import folderIconThreeUrl from '../../assets/icons/File3.png'
 import imageIconUrl from '../../assets/icons/Image.png'
 import type { LocalFolderItem } from '../../service/localApiTypes'
 import { usesImageFileIcon } from '../../utils/imageFileIcon'
-import { hasVisibleFolderItems, type DesktopState } from '../../utils/desktopState'
+import {
+  getSortedTodoItems,
+  hasVisibleFolderItems,
+  type DesktopState,
+  type InternetTodoItem,
+  type TodoSortMode,
+} from '../../utils/desktopState'
 import {
   formatCpuUsage,
   formatTemperature,
 } from '../../utils/formatters'
 
 type ShellActionHandler = () => void
+type ShellInputHandler = (value: string) => void
+type ShellTodoHandler = (todoId: number) => void
+type ShellTodoSortHandler = (todoSortMode: TodoSortMode) => void
 
 type DesktopShell = {
   render: (state: DesktopState) => void
   onOpenFolderClick: (handler: ShellActionHandler) => void
+  onOpenInternetClick: (handler: ShellActionHandler) => void
+  onCloseInternetClick: (handler: ShellActionHandler) => void
+  onOpenInternetNameDialogClick: (handler: ShellActionHandler) => void
+  onCancelInternetNameDialogClick: (handler: ShellActionHandler) => void
+  onConfirmInternetNameInputClick: (handler: ShellActionHandler) => void
+  onRejectInternetNameConfirmationClick: (handler: ShellActionHandler) => void
+  onAcceptInternetNameConfirmationClick: (handler: ShellActionHandler) => void
+  onInternetNameInput: (handler: ShellInputHandler) => void
+  onOpenTodoComposerClick: (handler: ShellActionHandler) => void
+  onCancelTodoComposerClick: (handler: ShellActionHandler) => void
+  onAddTodoItem: (handler: ShellActionHandler) => void
+  onCompleteTodoComposerClick: (handler: ShellActionHandler) => void
+  onTodoDraftInput: (handler: ShellInputHandler) => void
+  onCompleteTodoClick: (handler: ShellTodoHandler) => void
+  onTodoSortChange: (handler: ShellTodoSortHandler) => void
+  onOpenTodoResetDialogClick: (handler: ShellActionHandler) => void
+  onRejectTodoResetClick: (handler: ShellActionHandler) => void
+  onCancelWholeTodoResetClick: (handler: ShellActionHandler) => void
+  onStopTodoResetClick: (handler: ShellActionHandler) => void
+  onAcceptTodoResetClick: (handler: ShellActionHandler) => void
 }
+
+const isTodoSortMode = (value: string): value is TodoSortMode =>
+  value === 'latest' || value === 'oldest' || value === 'alphabetical'
+
+const internetExplorerIconMarkup = icon(faInternetExplorer, {
+  classes: ['desktop-shell__shortcut-icon'],
+}).html.join('')
 
 export const createDesktopShell = (container: HTMLElement): DesktopShell => {
   let openFolderHandler: ShellActionHandler = () => {}
+  let openInternetHandler: ShellActionHandler = () => {}
+  let closeInternetHandler: ShellActionHandler = () => {}
+  let openInternetNameDialogHandler: ShellActionHandler = () => {}
+  let cancelInternetNameDialogHandler: ShellActionHandler = () => {}
+  let confirmInternetNameInputHandler: ShellActionHandler = () => {}
+  let rejectInternetNameConfirmationHandler: ShellActionHandler = () => {}
+  let acceptInternetNameConfirmationHandler: ShellActionHandler = () => {}
+  let internetNameInputHandler: ShellInputHandler = () => {}
+  let openTodoComposerHandler: ShellActionHandler = () => {}
+  let cancelTodoComposerHandler: ShellActionHandler = () => {}
+  let addTodoItemHandler: ShellActionHandler = () => {}
+  let completeTodoComposerHandler: ShellActionHandler = () => {}
+  let todoDraftInputHandler: ShellInputHandler = () => {}
+  let completeTodoHandler: ShellTodoHandler = () => {}
+  let todoSortChangeHandler: ShellTodoSortHandler = () => {}
+  let openTodoResetDialogHandler: ShellActionHandler = () => {}
+  let rejectTodoResetHandler: ShellActionHandler = () => {}
+  let cancelWholeTodoResetHandler: ShellActionHandler = () => {}
+  let stopTodoResetHandler: ShellActionHandler = () => {}
+  let acceptTodoResetHandler: ShellActionHandler = () => {}
+  let isInternetWindowClosing = false
   const directoryIconUrls = [folderIconOneUrl, folderIconTwoUrl, folderIconThreeUrl]
   const directoryIconByName = new Map<string, string>()
 
@@ -94,21 +153,187 @@ export const createDesktopShell = (container: HTMLElement): DesktopShell => {
           </article>
         </section>
         <aside class="desktop-shell__right-rail">
-          <div class="desktop-shell__right-badges">
-            <div class="rail-card rail-card--drive">Project</div>
-            <div class="rail-card rail-card--disk">Disk</div>
-            <div class="rail-card rail-card--drive">HD1</div>
-          </div>
-          <div class="desktop-shell__right-label">FILE</div>
-          <div class="rail-blank-panel">
-            <p>No GUI window here.</p>
-            <p>This column keeps the reference rhythm.</p>
-          </div>
-          <div class="desktop-shell__trash">
-            <div class="desktop-shell__trash-icon"></div>
-            <span>Garbage</span>
-          </div>
+          <button
+            class="desktop-shell__shortcut"
+            type="button"
+            data-desktop-internet-icon
+            aria-label="Open Internet Explorer"
+          >
+            ${internetExplorerIconMarkup}
+            <span class="desktop-shell__shortcut-label">Internet</span>
+            <span class="desktop-shell__shortcut-label">Explorer</span>
+          </button>
         </aside>
+        <section class="internet-launch-dialog" data-internet-launch-dialog hidden>
+          <div class="internet-launch-dialog__panel">
+            <p class="internet-launch-dialog__title">Internet Explorer를 여는 중...</p>
+            <div
+              class="internet-launch-dialog__track"
+              data-internet-launch-track
+              role="progressbar"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+            >
+              <div class="internet-launch-dialog__fill" data-internet-launch-fill></div>
+            </div>
+            <p class="internet-launch-dialog__value" data-internet-launch-value>0%</p>
+          </div>
+        </section>
+        <article class="retro-window retro-window--internet" data-internet-window hidden>
+          <header class="retro-window__titlebar retro-window__titlebar--internet">
+            <span class="retro-window__title">my-desktop</span>
+            <button
+              class="retro-window__close-button"
+              type="button"
+              data-close-internet-window
+              aria-label="Close internet window"
+            >
+              X
+            </button>
+          </header>
+          <div class="internet-window__body">
+            <p class="internet-window__eyebrow">WELCOME</p>
+            <h2 class="internet-window__headline" data-internet-headline>어서오세요 환영합니다!</h2>
+            <p class="internet-window__time-value" data-local-time-label>--</p>
+            <div class="internet-window__action-row">
+              <div class="internet-window__action-slot">
+                <button class="internet-window__join-button" type="button" data-open-name-dialog-button>
+                  이름 입력하기
+                </button>
+                <section class="internet-name-entry" data-name-entry-dialog hidden>
+                  <input
+                    class="internet-name-entry__input"
+                    type="text"
+                    maxlength="20"
+                    data-name-input
+                    placeholder="이름을 입력해주세요"
+                  />
+                  <div class="internet-name-entry__actions">
+                    <button class="retro-button internet-name-entry__button" type="button" data-confirm-name-input-button>
+                      확인
+                    </button>
+                    <button class="retro-button internet-name-entry__button" type="button" data-cancel-name-dialog-button>
+                      취소
+                    </button>
+                  </div>
+                </section>
+              </div>
+              <div class="internet-window__action-slot internet-window__action-slot--todo">
+                <button class="internet-window__join-button internet-window__join-button--todo" type="button" data-open-todo-composer-button>
+                  할 일 목록 작성하기
+                </button>
+                <section class="internet-todo-composer" data-todo-composer hidden>
+                  <input
+                    class="internet-todo-composer__input"
+                    type="text"
+                    maxlength="40"
+                    data-todo-input
+                    placeholder="할 일을 입력해주세요"
+                  />
+                  <div class="internet-todo-composer__actions">
+                    <button class="retro-button internet-todo-composer__button" type="button" data-complete-todo-composer-button>
+                      완료
+                    </button>
+                    <button class="retro-button internet-todo-composer__button" type="button" data-cancel-todo-composer-button>
+                      취소
+                    </button>
+                  </div>
+                </section>
+              </div>
+            </div>
+            <section class="internet-todo-toolbar" data-todo-reset-toolbar hidden>
+              <button class="retro-button internet-todo-reset-button" type="button" data-open-todo-reset-dialog-button>
+                초기화
+              </button>
+            </section>
+            <section class="internet-confirm-dialog" data-name-confirm-dialog hidden>
+              <div class="internet-confirm-dialog__panel">
+                <p class="internet-confirm-dialog__message">정말 이름을 바꾸시겠습니까?</p>
+                <div class="internet-confirm-dialog__actions">
+                  <button class="retro-button internet-confirm-dialog__button" type="button" data-reject-name-confirmation-button>
+                    아니오
+                  </button>
+                  <button class="retro-button retro-button--primary internet-confirm-dialog__button" type="button" data-accept-name-confirmation-button>
+                    예
+                  </button>
+                </div>
+              </div>
+            </section>
+            <section class="internet-confirm-dialog internet-confirm-dialog--todo-reset" data-todo-reset-dialog hidden>
+              <div class="internet-confirm-dialog__panel internet-confirm-dialog__panel--todo-reset" data-todo-reset-confirm-panel>
+                <p class="internet-confirm-dialog__message">정말 초기화하시겠습니까?</p>
+                <div class="internet-confirm-dialog__actions">
+                  <button class="retro-button retro-button--primary internet-confirm-dialog__button" type="button" data-accept-todo-reset-button>
+                    예
+                  </button>
+                  <button class="retro-button internet-confirm-dialog__button" type="button" data-reject-todo-reset-button>
+                    아니오
+                  </button>
+                </div>
+              </div>
+              <div class="internet-confirm-dialog__panel internet-confirm-dialog__panel--todo-reset-progress" data-todo-reset-progress-panel hidden>
+                <p class="internet-confirm-dialog__message">초기화가 진행 중입니다</p>
+                <div
+                  class="internet-reset-progress"
+                  data-todo-reset-progress-track
+                  role="progressbar"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-valuenow="0"
+                >
+                  <div class="internet-reset-progress__fill" data-todo-reset-progress-fill></div>
+                </div>
+                <p class="internet-reset-progress__value" data-todo-reset-progress-value>0%</p>
+                <div class="internet-confirm-dialog__actions">
+                  <button class="retro-button internet-confirm-dialog__button" type="button" data-cancel-whole-todo-reset-button>
+                    전체 취소
+                  </button>
+                  <button class="retro-button internet-confirm-dialog__button internet-confirm-dialog__button--stop" type="button" data-stop-todo-reset-button>
+                    중단
+                  </button>
+                </div>
+              </div>
+            </section>
+          </div>
+          <section class="internet-todo-dock">
+            <section class="internet-todo-stack" data-todo-list></section>
+            <section class="internet-todo-sort-panel" data-todo-toolbar hidden>
+              <div class="internet-sort-group" role="radiogroup" aria-label="할 일 목록 정렬방식">
+                <label class="internet-sort-group__option">
+                  <input
+                    class="internet-sort-group__control"
+                    type="radio"
+                    name="internet-todo-sort"
+                    value="latest"
+                    data-todo-sort-input
+                  />
+                  <span>최신순</span>
+                </label>
+                <label class="internet-sort-group__option">
+                  <input
+                    class="internet-sort-group__control"
+                    type="radio"
+                    name="internet-todo-sort"
+                    value="oldest"
+                    data-todo-sort-input
+                  />
+                  <span>오래된 순</span>
+                </label>
+                <label class="internet-sort-group__option">
+                  <input
+                    class="internet-sort-group__control"
+                    type="radio"
+                    name="internet-todo-sort"
+                    value="alphabetical"
+                    data-todo-sort-input
+                  />
+                  <span>가나다순</span>
+                </label>
+              </div>
+            </section>
+          </section>
+        </article>
       </div>
     </div>
   `
@@ -126,6 +351,43 @@ export const createDesktopShell = (container: HTMLElement): DesktopShell => {
   const summaryStatusElement = container.querySelector<HTMLElement>('[data-summary-status]')
   const summaryPreviewElement = container.querySelector<HTMLElement>('[data-summary-preview]')
   const openFolderButtonElement = container.querySelector<HTMLButtonElement>('[data-open-folder-button]')
+  const openInternetButtonElement = container.querySelector<HTMLButtonElement>('[data-desktop-internet-icon]')
+  const internetLaunchDialogElement = container.querySelector<HTMLElement>('[data-internet-launch-dialog]')
+  const internetLaunchTrackElement = container.querySelector<HTMLElement>('[data-internet-launch-track]')
+  const internetLaunchFillElement = container.querySelector<HTMLElement>('[data-internet-launch-fill]')
+  const internetLaunchValueElement = container.querySelector<HTMLElement>('[data-internet-launch-value]')
+  const closeInternetButtonElement = container.querySelector<HTMLButtonElement>('[data-close-internet-window]')
+  const internetWindowElement = container.querySelector<HTMLElement>('[data-internet-window]')
+  const internetHeadlineElement = container.querySelector<HTMLElement>('[data-internet-headline]')
+  const localTimeLabelElement = container.querySelector<HTMLElement>('[data-local-time-label]')
+  const openNameDialogButtonElement = container.querySelector<HTMLButtonElement>('[data-open-name-dialog-button]')
+  const nameEntryDialogElement = container.querySelector<HTMLElement>('[data-name-entry-dialog]')
+  const nameInputElement = container.querySelector<HTMLInputElement>('[data-name-input]')
+  const cancelNameDialogButtonElement = container.querySelector<HTMLButtonElement>('[data-cancel-name-dialog-button]')
+  const confirmNameInputButtonElement = container.querySelector<HTMLButtonElement>('[data-confirm-name-input-button]')
+  const nameConfirmDialogElement = container.querySelector<HTMLElement>('[data-name-confirm-dialog]')
+  const rejectNameConfirmationButtonElement = container.querySelector<HTMLButtonElement>('[data-reject-name-confirmation-button]')
+  const acceptNameConfirmationButtonElement = container.querySelector<HTMLButtonElement>('[data-accept-name-confirmation-button]')
+  const openTodoComposerButtonElement = container.querySelector<HTMLButtonElement>('[data-open-todo-composer-button]')
+  const todoComposerElement = container.querySelector<HTMLElement>('[data-todo-composer]')
+  const todoInputElement = container.querySelector<HTMLInputElement>('[data-todo-input]')
+  const completeTodoComposerButtonElement = container.querySelector<HTMLButtonElement>('[data-complete-todo-composer-button]')
+  const cancelTodoComposerButtonElement = container.querySelector<HTMLButtonElement>('[data-cancel-todo-composer-button]')
+  const todoSortInputElements = container.querySelectorAll<HTMLInputElement>('[data-todo-sort-input]')
+  const todoResetToolbarElement = container.querySelector<HTMLElement>('[data-todo-reset-toolbar]')
+  const todoToolbarElement = container.querySelector<HTMLElement>('[data-todo-toolbar]')
+  const openTodoResetDialogButtonElement = container.querySelector<HTMLButtonElement>('[data-open-todo-reset-dialog-button]')
+  const todoResetDialogElement = container.querySelector<HTMLElement>('[data-todo-reset-dialog]')
+  const todoResetConfirmPanelElement = container.querySelector<HTMLElement>('[data-todo-reset-confirm-panel]')
+  const todoResetProgressPanelElement = container.querySelector<HTMLElement>('[data-todo-reset-progress-panel]')
+  const todoResetProgressTrackElement = container.querySelector<HTMLElement>('[data-todo-reset-progress-track]')
+  const todoResetProgressFillElement = container.querySelector<HTMLElement>('[data-todo-reset-progress-fill]')
+  const todoResetProgressValueElement = container.querySelector<HTMLElement>('[data-todo-reset-progress-value]')
+  const acceptTodoResetButtonElement = container.querySelector<HTMLButtonElement>('[data-accept-todo-reset-button]')
+  const rejectTodoResetButtonElement = container.querySelector<HTMLButtonElement>('[data-reject-todo-reset-button]')
+  const cancelWholeTodoResetButtonElement = container.querySelector<HTMLButtonElement>('[data-cancel-whole-todo-reset-button]')
+  const stopTodoResetButtonElement = container.querySelector<HTMLButtonElement>('[data-stop-todo-reset-button]')
+  const todoListElement = container.querySelector<HTMLElement>('[data-todo-list]')
 
   if (
     !cpuValueElement ||
@@ -140,13 +402,154 @@ export const createDesktopShell = (container: HTMLElement): DesktopShell => {
     !summaryFolderElement ||
     !summaryStatusElement ||
     !summaryPreviewElement ||
-    !openFolderButtonElement
+    !openFolderButtonElement ||
+    !openInternetButtonElement ||
+    !internetLaunchDialogElement ||
+    !internetLaunchTrackElement ||
+    !internetLaunchFillElement ||
+    !internetLaunchValueElement ||
+    !closeInternetButtonElement ||
+    !internetWindowElement ||
+    !internetHeadlineElement ||
+    !localTimeLabelElement ||
+    !openNameDialogButtonElement ||
+    !nameEntryDialogElement ||
+    !nameInputElement ||
+    !cancelNameDialogButtonElement ||
+    !confirmNameInputButtonElement ||
+    !nameConfirmDialogElement ||
+    !rejectNameConfirmationButtonElement ||
+    !acceptNameConfirmationButtonElement ||
+    !openTodoComposerButtonElement ||
+    !todoComposerElement ||
+    !todoInputElement ||
+    !completeTodoComposerButtonElement ||
+    !cancelTodoComposerButtonElement ||
+    todoSortInputElements.length !== 3 ||
+    !todoResetToolbarElement ||
+    !todoToolbarElement ||
+    !openTodoResetDialogButtonElement ||
+    !todoResetDialogElement ||
+    !todoResetConfirmPanelElement ||
+    !todoResetProgressPanelElement ||
+    !todoResetProgressTrackElement ||
+    !todoResetProgressFillElement ||
+    !todoResetProgressValueElement ||
+    !acceptTodoResetButtonElement ||
+    !rejectTodoResetButtonElement ||
+    !cancelWholeTodoResetButtonElement ||
+    !stopTodoResetButtonElement ||
+    !todoListElement
   ) {
     throw new Error('Desktop shell UI is missing required elements')
   }
 
   openFolderButtonElement.addEventListener('click', () => {
     openFolderHandler()
+  })
+
+  openInternetButtonElement.addEventListener('click', () => {
+    openInternetHandler()
+  })
+
+  openNameDialogButtonElement.addEventListener('click', () => {
+    openInternetNameDialogHandler()
+  })
+
+  nameInputElement.addEventListener('input', () => {
+    internetNameInputHandler(nameInputElement.value)
+  })
+
+  nameInputElement.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && nameInputElement.value.trim()) {
+      confirmInternetNameInputHandler()
+    }
+  })
+
+  cancelNameDialogButtonElement.addEventListener('click', () => {
+    cancelInternetNameDialogHandler()
+  })
+
+  confirmNameInputButtonElement.addEventListener('click', () => {
+    confirmInternetNameInputHandler()
+  })
+
+  openTodoComposerButtonElement.addEventListener('click', () => {
+    openTodoComposerHandler()
+  })
+
+  todoInputElement.addEventListener('input', () => {
+    todoDraftInputHandler(todoInputElement.value)
+  })
+
+  todoInputElement.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && todoInputElement.value.trim()) {
+      event.preventDefault()
+      addTodoItemHandler()
+    }
+  })
+
+  completeTodoComposerButtonElement.addEventListener('click', () => {
+    completeTodoComposerHandler()
+  })
+
+  cancelTodoComposerButtonElement.addEventListener('click', () => {
+    cancelTodoComposerHandler()
+  })
+
+  for (const todoSortInputElement of todoSortInputElements) {
+    todoSortInputElement.addEventListener('change', () => {
+      if (!todoSortInputElement.checked || !isTodoSortMode(todoSortInputElement.value)) {
+        return
+      }
+
+      todoSortChangeHandler(todoSortInputElement.value)
+    })
+  }
+
+  openTodoResetDialogButtonElement.addEventListener('click', () => {
+    openTodoResetDialogHandler()
+  })
+
+  rejectTodoResetButtonElement.addEventListener('click', () => {
+    rejectTodoResetHandler()
+  })
+
+  cancelWholeTodoResetButtonElement.addEventListener('click', () => {
+    cancelWholeTodoResetHandler()
+  })
+
+  stopTodoResetButtonElement.addEventListener('click', () => {
+    stopTodoResetHandler()
+  })
+
+  acceptTodoResetButtonElement.addEventListener('click', () => {
+    acceptTodoResetHandler()
+  })
+
+  rejectNameConfirmationButtonElement.addEventListener('click', () => {
+    rejectInternetNameConfirmationHandler()
+  })
+
+  acceptNameConfirmationButtonElement.addEventListener('click', () => {
+    acceptInternetNameConfirmationHandler()
+  })
+
+  closeInternetButtonElement.addEventListener('click', () => {
+    if (isInternetWindowClosing || internetWindowElement.hidden) {
+      return
+    }
+
+    isInternetWindowClosing = true
+    closeInternetButtonElement.disabled = true
+    internetWindowElement.classList.add('retro-window--closing')
+
+    window.setTimeout(() => {
+      isInternetWindowClosing = false
+      internetWindowElement.classList.remove('retro-window--closing')
+      closeInternetButtonElement.disabled = false
+      closeInternetHandler()
+    }, 280)
   })
 
   const readDirectoryIconUrl = (itemName: string) => {
@@ -214,6 +617,36 @@ export const createDesktopShell = (container: HTMLElement): DesktopShell => {
     return placeholderElement
   }
 
+  const createTodoBannerElement = (item: InternetTodoItem) => {
+    const bannerElement = document.createElement('article')
+    const labelElement = document.createElement('label')
+    const checkboxElement = document.createElement('input')
+    const textElement = document.createElement('span')
+
+    bannerElement.className =
+      item.status === 'removing'
+        ? 'internet-todo-banner internet-todo-banner--removing'
+        : 'internet-todo-banner'
+    labelElement.className = 'internet-todo-banner__label'
+    checkboxElement.className = 'internet-todo-banner__checkbox'
+    checkboxElement.type = 'checkbox'
+    checkboxElement.checked = item.status === 'removing'
+    checkboxElement.disabled = item.status === 'removing'
+    textElement.className = 'internet-todo-banner__text'
+    textElement.textContent = item.text
+
+    checkboxElement.addEventListener('change', () => {
+      if (checkboxElement.checked) {
+        completeTodoHandler(item.id)
+      }
+    })
+
+    labelElement.append(checkboxElement, textElement)
+    bannerElement.append(labelElement)
+
+    return bannerElement
+  }
+
   return {
     render(state) {
       cpuValueElement.textContent = formatCpuUsage(state.cpuUsagePercent)
@@ -222,6 +655,50 @@ export const createDesktopShell = (container: HTMLElement): DesktopShell => {
         state.temperatureStatus === 'error',
       )
       temperatureLabelElement.dataset.state = state.temperatureStatus
+      openInternetButtonElement.disabled = state.internetLaunchActive
+      internetLaunchDialogElement.hidden = !state.internetLaunchActive
+      internetLaunchTrackElement.setAttribute('aria-valuenow', String(state.internetLaunchProgress))
+      internetLaunchFillElement.style.width = `${state.internetLaunchProgress}%`
+      internetLaunchValueElement.textContent = `${state.internetLaunchProgress}%`
+      if (state.internetWindowOpen) {
+        internetWindowElement.hidden = false
+      } else if (!isInternetWindowClosing) {
+        internetWindowElement.hidden = true
+        internetWindowElement.classList.remove('retro-window--closing')
+      }
+      internetHeadlineElement.textContent = state.visitorName
+        ? `${state.visitorName}님 환영합니다!`
+        : '어서오세요 환영합니다!'
+      openNameDialogButtonElement.hidden = state.internetDialogMode !== 'closed'
+      nameEntryDialogElement.hidden = state.internetDialogMode !== 'input'
+      nameConfirmDialogElement.hidden = state.internetDialogMode !== 'confirm'
+      openTodoComposerButtonElement.hidden = state.todoComposerOpen
+      todoComposerElement.hidden = !state.todoComposerOpen
+      if (nameInputElement.value !== state.internetDraftName) {
+        nameInputElement.value = state.internetDraftName
+      }
+      if (todoInputElement.value !== state.todoDraftText) {
+        todoInputElement.value = state.todoDraftText
+      }
+      confirmNameInputButtonElement.disabled = state.internetDraftName.trim().length === 0
+      localTimeLabelElement.textContent = state.localTimeLabel
+      todoResetDialogElement.hidden = state.todoResetDialogMode === 'closed'
+      todoResetConfirmPanelElement.hidden = state.todoResetDialogMode !== 'confirm'
+      todoResetProgressPanelElement.hidden = state.todoResetDialogMode !== 'progress'
+      todoResetProgressTrackElement.setAttribute('aria-valuenow', String(state.todoResetProgress))
+      todoResetProgressFillElement.style.width = `${state.todoResetProgress}%`
+      todoResetProgressValueElement.textContent = `${state.todoResetProgress}%`
+      todoResetToolbarElement.hidden =
+        !state.todoComposerOpen &&
+        state.todoItems.length === 0 &&
+        state.todoResetDialogMode === 'closed'
+      todoToolbarElement.hidden = state.todoItems.length === 0
+      for (const todoSortInputElement of todoSortInputElements) {
+        todoSortInputElement.checked = todoSortInputElement.value === state.todoSortMode
+      }
+      todoListElement.replaceChildren(
+        ...getSortedTodoItems(state).map((item) => createTodoBannerElement(item)),
+      )
       folderTitleElement.textContent = state.folderTitle
       openFolderButtonElement.disabled = state.folderStatus === 'loading'
       openFolderButtonElement.textContent =
@@ -277,6 +754,66 @@ export const createDesktopShell = (container: HTMLElement): DesktopShell => {
     },
     onOpenFolderClick(handler) {
       openFolderHandler = handler
+    },
+    onOpenInternetClick(handler) {
+      openInternetHandler = handler
+    },
+    onCloseInternetClick(handler) {
+      closeInternetHandler = handler
+    },
+    onOpenInternetNameDialogClick(handler) {
+      openInternetNameDialogHandler = handler
+    },
+    onCancelInternetNameDialogClick(handler) {
+      cancelInternetNameDialogHandler = handler
+    },
+    onConfirmInternetNameInputClick(handler) {
+      confirmInternetNameInputHandler = handler
+    },
+    onRejectInternetNameConfirmationClick(handler) {
+      rejectInternetNameConfirmationHandler = handler
+    },
+    onAcceptInternetNameConfirmationClick(handler) {
+      acceptInternetNameConfirmationHandler = handler
+    },
+    onInternetNameInput(handler) {
+      internetNameInputHandler = handler
+    },
+    onOpenTodoComposerClick(handler) {
+      openTodoComposerHandler = handler
+    },
+    onCancelTodoComposerClick(handler) {
+      cancelTodoComposerHandler = handler
+    },
+    onAddTodoItem(handler) {
+      addTodoItemHandler = handler
+    },
+    onCompleteTodoComposerClick(handler) {
+      completeTodoComposerHandler = handler
+    },
+    onTodoDraftInput(handler) {
+      todoDraftInputHandler = handler
+    },
+    onCompleteTodoClick(handler) {
+      completeTodoHandler = handler
+    },
+    onTodoSortChange(handler) {
+      todoSortChangeHandler = handler
+    },
+    onOpenTodoResetDialogClick(handler) {
+      openTodoResetDialogHandler = handler
+    },
+    onRejectTodoResetClick(handler) {
+      rejectTodoResetHandler = handler
+    },
+    onCancelWholeTodoResetClick(handler) {
+      cancelWholeTodoResetHandler = handler
+    },
+    onStopTodoResetClick(handler) {
+      stopTodoResetHandler = handler
+    },
+    onAcceptTodoResetClick(handler) {
+      acceptTodoResetHandler = handler
     },
   }
 }
