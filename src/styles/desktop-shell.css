@@ -108,15 +108,76 @@ textarea {
 
 .desktop-shell__right-rail {
   position: relative;
-  padding: 26px 18px 24px 10px;
+  padding: 26px 14px 24px;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   gap: 16px;
   background:
     radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.22) 1px, transparent 0) 0 0 / 6px 6px,
     #6171bf;
   border-left: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.desktop-shell__shortcut {
+  padding: 0 2px;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  color: #f7f5ef;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.desktop-shell__shortcut:hover .desktop-shell__shortcut-icon,
+.desktop-shell__shortcut:focus-visible .desktop-shell__shortcut-icon {
+  transform: translateY(-1px);
+}
+
+.desktop-shell__shortcut:focus-visible {
+  outline: 2px dashed rgba(255, 251, 236, 0.95);
+  outline-offset: 4px;
+}
+
+.desktop-shell__shortcut-icon {
+  width: 44px;
+  height: 44px;
+  display: block;
+  margin: 0 auto;
+  color: #ffd56f;
+  filter:
+    drop-shadow(1px 0 0 #3150ba)
+    drop-shadow(-1px 0 0 #3150ba)
+    drop-shadow(0 1px 0 #3150ba)
+    drop-shadow(0 -1px 0 #3150ba)
+    drop-shadow(1px 1px 0 rgba(255, 255, 255, 0.55))
+    drop-shadow(3px 3px 0 rgba(21, 33, 83, 0.34));
+  transition: transform 120ms ease;
+  shape-rendering: crispEdges;
+}
+
+.desktop-shell__shortcut-icon path {
+  stroke: #213a92;
+  stroke-width: 10px;
+  stroke-linejoin: miter;
+  paint-order: stroke fill;
+}
+
+.desktop-shell__shortcut-label {
+  display: block;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 700;
+  text-align: center;
+  color: #f9f4e5;
+  text-shadow:
+    1px 1px 0 rgba(34, 47, 104, 0.88),
+    0 0 6px rgba(255, 255, 255, 0.16);
+}
+
+.desktop-shell__shortcut-label:first-of-type {
+  margin-top: 10px;
 }
 
 .desktop-shell__right-badges {
@@ -455,21 +516,8 @@ textarea {
 
   .desktop-shell__right-rail {
     order: -1;
-    min-height: 220px;
-    align-items: stretch;
-  }
-
-  .desktop-shell__right-badges {
-    flex-direction: row;
-    justify-content: flex-end;
-  }
-
-  .desktop-shell__right-label {
-    display: none;
-  }
-
-  .desktop-shell__trash {
-    margin-left: auto;
+    min-height: 170px;
+    align-items: center;
   }
 }
 

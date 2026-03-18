@@ -1,6 +1,8 @@
 /*
  * This file is for rendering the retro desktop shell and the folder window.
  */
+import { faInternetExplorer } from '@fortawesome/free-brands-svg-icons'
+import { icon } from '@fortawesome/fontawesome-svg-core'
 import folderIconOneUrl from '../../assets/icons/File1.png'
 import folderIconTwoUrl from '../../assets/icons/File2.png'
 import folderIconThreeUrl from '../../assets/icons/File3.png'
@@ -19,6 +21,10 @@ type DesktopShell = {
   render: (state: DesktopState) => void
   onOpenFolderClick: (handler: ShellActionHandler) => void
 }
+
+const internetExplorerIconMarkup = icon(faInternetExplorer, {
+  classes: ['desktop-shell__shortcut-icon'],
+}).html.join('')
 
 export const createDesktopShell = (container: HTMLElement): DesktopShell => {
   let openFolderHandler: ShellActionHandler = () => {}
@@ -94,20 +100,16 @@ export const createDesktopShell = (container: HTMLElement): DesktopShell => {
           </article>
         </section>
         <aside class="desktop-shell__right-rail">
-          <div class="desktop-shell__right-badges">
-            <div class="rail-card rail-card--drive">Project</div>
-            <div class="rail-card rail-card--disk">Disk</div>
-            <div class="rail-card rail-card--drive">HD1</div>
-          </div>
-          <div class="desktop-shell__right-label">FILE</div>
-          <div class="rail-blank-panel">
-            <p>No GUI window here.</p>
-            <p>This column keeps the reference rhythm.</p>
-          </div>
-          <div class="desktop-shell__trash">
-            <div class="desktop-shell__trash-icon"></div>
-            <span>Garbage</span>
-          </div>
+          <button
+            class="desktop-shell__shortcut"
+            type="button"
+            data-desktop-internet-icon
+            aria-label="Open Internet Explorer"
+          >
+            ${internetExplorerIconMarkup}
+            <span class="desktop-shell__shortcut-label">Internet</span>
+            <span class="desktop-shell__shortcut-label">Explorer</span>
+          </button>
         </aside>
       </div>
     </div>

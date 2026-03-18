@@ -7,6 +7,7 @@
 - 언어: TypeScript
 - 플래폼: 웹브라우저 (데스크탑 / 모바일)
 - 클라이언트: PixiJS v8
+- 아이콘: Font Awesome Free Brands SVG를 사용한다.
 - 빌드: `vite build`로 프로덕션 번들을 생성하고, 개발 중에는 `vite` 개발 서버를 사용한다.
 - 이미지 애셋: `free-tex-packer`로 이미지를 PixiJS 스프라이트시트 (atlas PNG + JSON)로 패킹한다.
 - 서버: 로컬 개발, 정적 파일 서빙, 점수 기록 등의 API를 담당한다.
