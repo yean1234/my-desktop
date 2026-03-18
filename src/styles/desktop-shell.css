@@ -170,6 +170,21 @@ textarea {
   paint-order: stroke fill;
 }
 
+.desktop-shell__shortcut-icon--deceptive {
+  color: #8df1ff;
+  filter:
+    drop-shadow(1px 0 0 #7a3f9f)
+    drop-shadow(-1px 0 0 #7a3f9f)
+    drop-shadow(0 1px 0 #7a3f9f)
+    drop-shadow(0 -1px 0 #7a3f9f)
+    drop-shadow(1px 1px 0 rgba(255, 255, 255, 0.55))
+    drop-shadow(3px 3px 0 rgba(83, 27, 103, 0.34));
+}
+
+.desktop-shell__shortcut-icon--deceptive path {
+  stroke: #7a3275;
+}
+
 .desktop-shell__shortcut-label {
   display: block;
   font-size: 12px;
@@ -306,7 +321,8 @@ textarea {
     linear-gradient(180deg, #fff5dc 0%, #f7dff0 36%, #d8e6ff 72%, #f7f0e0 100%);
 }
 
-[data-internet-window][hidden] {
+[data-internet-window][hidden],
+[data-deceptive-internet-window][hidden] {
   display: none !important;
 }
 
@@ -741,14 +757,23 @@ textarea {
 }
 
 [data-name-entry-dialog][hidden],
+[data-deceptive-name-entry-dialog][hidden],
 [data-name-confirm-dialog][hidden],
+[data-deceptive-name-confirm-dialog][hidden],
 [data-todo-composer][hidden],
+[data-deceptive-todo-composer][hidden],
 [data-todo-reset-toolbar][hidden],
+[data-deceptive-todo-reset-toolbar][hidden],
 [data-todo-toolbar][hidden],
+[data-deceptive-todo-toolbar][hidden],
 [data-internet-launch-dialog][hidden],
+[data-deceptive-internet-launch-dialog][hidden],
 [data-todo-reset-confirm-panel][hidden],
+[data-deceptive-todo-reset-confirm-panel][hidden],
 [data-todo-reset-progress-panel][hidden],
-[data-todo-reset-dialog][hidden] {
+[data-deceptive-todo-reset-progress-panel][hidden],
+[data-todo-reset-dialog][hidden],
+[data-deceptive-todo-reset-dialog][hidden] {
   display: none !important;
 }
 

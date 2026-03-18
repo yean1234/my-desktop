@@ -16,7 +16,16 @@ describe('desktop shell styles', () => {
 
   it('keeps the internet window hidden until it is opened', () => {
     expect(shellStyles).toMatch(
-      /\[data-internet-window\]\[hidden\]\s*\{[\s\S]*display:\s*none !important;/,
+      /\[data-internet-window\]\[hidden\],[\s\S]*\[data-deceptive-internet-window\]\[hidden\]\s*\{[\s\S]*display:\s*none !important;/,
+    )
+  })
+
+  it('styles the deceptive desktop shortcut icon with a different color treatment', () => {
+    expect(shellStyles).toMatch(
+      /\.desktop-shell__shortcut-icon--deceptive\s*\{[\s\S]*color:\s*#8df1ff;[\s\S]*drop-shadow\(1px 0 0 #7a3f9f\)/,
+    )
+    expect(shellStyles).toMatch(
+      /\.desktop-shell__shortcut-icon--deceptive path\s*\{[\s\S]*stroke:\s*#7a3275;/,
     )
   })
 
@@ -67,7 +76,7 @@ describe('desktop shell styles', () => {
 
   it('shows a retro confirmation modal for the name change', () => {
     expect(shellStyles).toMatch(
-      /\[data-name-entry-dialog\]\[hidden\],[\s\S]*\[data-name-confirm-dialog\]\[hidden\],[\s\S]*\[data-todo-composer\]\[hidden\],[\s\S]*\[data-todo-reset-toolbar\]\[hidden\],[\s\S]*\[data-todo-toolbar\]\[hidden\],[\s\S]*\[data-internet-launch-dialog\]\[hidden\],[\s\S]*\[data-todo-reset-confirm-panel\]\[hidden\],[\s\S]*\[data-todo-reset-progress-panel\]\[hidden\],[\s\S]*\[data-todo-reset-dialog\]\[hidden\]\s*\{[\s\S]*display:\s*none !important;/,
+      /\[data-name-entry-dialog\]\[hidden\],[\s\S]*\[data-deceptive-name-entry-dialog\]\[hidden\],[\s\S]*\[data-name-confirm-dialog\]\[hidden\],[\s\S]*\[data-deceptive-name-confirm-dialog\]\[hidden\],[\s\S]*\[data-todo-composer\]\[hidden\],[\s\S]*\[data-deceptive-todo-composer\]\[hidden\],[\s\S]*\[data-todo-reset-toolbar\]\[hidden\],[\s\S]*\[data-deceptive-todo-reset-toolbar\]\[hidden\],[\s\S]*\[data-todo-toolbar\]\[hidden\],[\s\S]*\[data-deceptive-todo-toolbar\]\[hidden\],[\s\S]*\[data-internet-launch-dialog\]\[hidden\],[\s\S]*\[data-deceptive-internet-launch-dialog\]\[hidden\],[\s\S]*\[data-todo-reset-confirm-panel\]\[hidden\],[\s\S]*\[data-deceptive-todo-reset-confirm-panel\]\[hidden\],[\s\S]*\[data-todo-reset-progress-panel\]\[hidden\],[\s\S]*\[data-deceptive-todo-reset-progress-panel\]\[hidden\],[\s\S]*\[data-todo-reset-dialog\]\[hidden\],[\s\S]*\[data-deceptive-todo-reset-dialog\]\[hidden\]\s*\{[\s\S]*display:\s*none !important;/,
     )
     expect(shellStyles).toMatch(
       /\.internet-confirm-dialog\s*\{[\s\S]*position:\s*fixed;[\s\S]*place-items:\s*center;[\s\S]*background:\s*rgba\(68, 72, 123, 0.38\);/,
