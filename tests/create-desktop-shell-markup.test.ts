@@ -1,18 +1,40 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { createDesktopShellMarkup } from '../src/component/desktop/desktopShellMarkup'
+import {
+  createBrowserLaunchDialogMarkup,
+  createBrowserWindowMarkup,
+} from '../src/component/desktop/internetBrowserSection'
 
-const shellSource = readFileSync(
+const createDesktopShellSource = readFileSync(
   resolve(process.cwd(), 'src/component/desktop/createDesktopShell.ts'),
   'utf8',
 )
+
+const shellMarkup = createDesktopShellMarkup({
+  internetExplorerIconMarkup: '<svg class="desktop-shell__shortcut-icon"></svg>',
+  deceptiveInternetExplorerIconMarkup:
+    '<svg class="desktop-shell__shortcut-icon desktop-shell__shortcut-icon--deceptive"></svg>',
+})
+
+const browserMarkup = [
+  createBrowserLaunchDialogMarkup('default'),
+  createBrowserWindowMarkup('default'),
+  createBrowserLaunchDialogMarkup('deceptive'),
+  createBrowserWindowMarkup('deceptive'),
+].join('\n')
+
+const shellSource = [createDesktopShellSource, shellMarkup, browserMarkup].join('\n')
 
 describe('createDesktopShell markup', () => {
   it('renders the internet explorer shortcut in the right rail', () => {
     expect(shellSource).toContain('<aside class="desktop-shell__right-rail">')
     expect(shellSource).toContain('data-desktop-internet-icon')
+    expect(shellSource).toContain('data-deceptive-desktop-internet-icon')
     expect(shellSource).toContain('class="desktop-shell__shortcut"')
     expect(shellSource).toContain('desktop-shell__shortcut-icon')
+    expect(shellSource).toContain('desktop-shell__shortcut-icon--deceptive')
     expect(shellSource).toContain('desktop-shell__shortcut-label')
     expect(shellSource).toContain('faInternetExplorer')
     expect(shellSource).not.toContain('rail-browser-launcher')
@@ -75,6 +97,43 @@ describe('createDesktopShell markup', () => {
     expect(shellSource).toContain('data-stop-todo-reset-button')
     expect(shellSource).toContain('중단')
     expect(shellSource).toContain('data-todo-list')
+    expect(shellSource).toContain('data-deceptive-internet-launch-dialog')
+    expect(shellSource).toContain('data-deceptive-internet-launch-track')
+    expect(shellSource).toContain('data-deceptive-internet-launch-fill')
+    expect(shellSource).toContain('data-deceptive-internet-launch-value')
+    expect(shellSource).toContain('data-deceptive-internet-window hidden')
+    expect(shellSource).toContain('data-close-deceptive-internet-window')
+    expect(shellSource).toContain('data-deceptive-internet-headline')
+    expect(shellSource).toContain('data-deceptive-local-time-label')
+    expect(shellSource).toContain('data-deceptive-open-name-dialog-button')
+    expect(shellSource).toContain('data-deceptive-name-entry-dialog')
+    expect(shellSource).toContain('data-deceptive-name-input')
+    expect(shellSource).toContain('data-deceptive-confirm-name-input-button')
+    expect(shellSource).toContain('data-deceptive-cancel-name-dialog-button')
+    expect(shellSource).toContain('data-deceptive-name-confirm-dialog')
+    expect(shellSource).toContain('data-deceptive-reject-name-confirmation-button')
+    expect(shellSource).toContain('data-deceptive-accept-name-confirmation-button')
+    expect(shellSource).toContain('data-deceptive-open-todo-composer-button')
+    expect(shellSource).toContain('data-deceptive-todo-composer')
+    expect(shellSource).toContain('data-deceptive-todo-input')
+    expect(shellSource).toContain('data-deceptive-complete-todo-composer-button')
+    expect(shellSource).toContain('data-deceptive-cancel-todo-composer-button')
+    expect(shellSource).toContain('data-deceptive-todo-sort-input')
+    expect(shellSource).toContain('name="deceptive-internet-todo-sort"')
+    expect(shellSource).toContain('data-deceptive-todo-toolbar hidden')
+    expect(shellSource).toContain('data-deceptive-todo-reset-toolbar hidden')
+    expect(shellSource).toContain('data-deceptive-open-todo-reset-dialog-button')
+    expect(shellSource).toContain('data-deceptive-todo-reset-dialog')
+    expect(shellSource).toContain('data-deceptive-todo-reset-confirm-panel')
+    expect(shellSource).toContain('data-deceptive-accept-todo-reset-button')
+    expect(shellSource).toContain('data-deceptive-reject-todo-reset-button')
+    expect(shellSource).toContain('data-deceptive-todo-reset-progress-panel')
+    expect(shellSource).toContain('data-deceptive-todo-reset-progress-track')
+    expect(shellSource).toContain('data-deceptive-todo-reset-progress-fill')
+    expect(shellSource).toContain('data-deceptive-todo-reset-progress-value')
+    expect(shellSource).toContain('data-deceptive-cancel-whole-todo-reset-button')
+    expect(shellSource).toContain('data-deceptive-stop-todo-reset-button')
+    expect(shellSource).toContain('data-deceptive-todo-list')
     expect(shellSource).not.toContain('현재 로컬 시간')
     expect(shellSource).not.toContain('회원 가입하기')
   })
